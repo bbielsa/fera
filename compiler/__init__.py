@@ -55,7 +55,7 @@ def t_IDENT(t):
     return t
 
 def t_DIDENT(t):
-    r'_{2}[a-zA-Z]+'
+    r'_{,2}[a-zA-Z]+'
     t.type = RESERVED.get(t.value, 'DIDENT')
     return t
 
@@ -159,6 +159,7 @@ def p_command_stmt(p):
                       | POINT
                       | COMMA
     '''
+    p[0] = p[1]
 
 def p_inline_stmt(p):
     '''
@@ -202,7 +203,7 @@ def p_init_stmt(p):
               | IDENT COLON TYPE ASSIGN LITERAL SEMICOLON
     '''
     is_init = len(p) == 7
-    
+
     if is_init:
         p[0] = ('init_stmt', p[1], p[3], p[5])
     else:
@@ -218,13 +219,23 @@ if __name__ == "__main__":
     program = '''
         data {
             a: byte = 255;
+            b: byte = 4;
         }
 
-        inline __clr {
+        inline _clr {
             __org($0)
-            __rel($0, $1)
             [-]
             __ret($0)
+        }
+
+        inline _out {
+            __org($0)
+            .
+            __ret($0)
+        }
+
+        inline _sete {
+        
         }
 
         entry {

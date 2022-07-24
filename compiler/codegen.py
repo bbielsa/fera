@@ -2,6 +2,7 @@ from scope import Identifier, IndexedIdentifier, Scope
 from parser import Program, DeclareStatement, CallInlineStatement, OriginDirectiveStatement, ReturnDirectiveStatement, CommandStatement
 from parser import DataBlock, EntryBlock, InlineBlock
 from command import Command, Comment
+import pprint
 
 class Allocator:
     @classmethod
@@ -248,6 +249,9 @@ p = Program(
     ]
 )
 c = CodeGenerator(p)
+
+pp = pprint.PrettyPrinter(indent=4)
+pp.pprint(p)
 
 c.emit_program()
 print(c.compile())
