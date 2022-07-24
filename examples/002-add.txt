@@ -1,0 +1,15 @@
+data {
+    x: byte;
+    y: byte;
+    z: byte;
+}
+
+entry {
+    x = 1;
+    y = 3;
+
+    _add(x, y);
+    _putb(y);
+    _cpy(y, z);
+}
+

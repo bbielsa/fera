@@ -1,0 +1,16 @@
+data {
+    x: byte;
+}
+
+proc a() {
+    x = 65;
+}
+
+proc b() {
+    x = 66;
+}
+
+entry {
+    a();
+    b();
+}

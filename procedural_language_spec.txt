@@ -1,0 +1,27 @@
+program = [datablock] [procblock { procblock }] [entryblock]
+
+datablock = "data" initblock
+procblock = "proc" identifier codeblock
+inlineblock = "inline" identifier inlineblock
+entryblock = "entry" codeblock
+
+inlineblock = "{}" | "{" inlinestmt { inlinestmt } "}"
+initblock = "{}" | "{" initstmt { initstmt } "}"
+codeblock = "{}" | "{" stmt { stmt } "}"
+
+inlinestmt = Cmd | Directive
+initstmt = identifier ":" type "=" constant ";"
+stmt = assignstmt ";" | callstmt ";"
+assignstmt = identifier "=" expr
+callstmt = identifier arguments
+
+expr = value | callexpr
+callexpr = identifier arguments
+arguments = "()" | "(" expr {"," expr} ")"
+constarguments = "()" | "(" constant { "," constant } ")"
+constant = Number
+value = Name | Number
+type = "byte"
+
+Directive = "__" Name constarguments
+Cmd = "+" | "-" | ">" | "<" | "." | "," | "[" | "]"

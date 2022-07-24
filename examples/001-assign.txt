@@ -1,0 +1,7 @@
+data {
+    x: byte;
+}
+
+entry {
+    x = 65;
+}

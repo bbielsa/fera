@@ -1,0 +1,166 @@
+/*
+ * _clr: Clear cell $0
+ *
+ * param $0: cell to be cleared
+ *
+ * return $0: zeroed cell
+ */
+inline _clr {
+  __org($0) [-]
+  __ret($0)
+}
+
+/*
+ * _cpy: Copy from $0 to $1
+ * 
+ * param $0: source cell
+ * param $1: destination cell
+ * param $2: temp cell
+ *
+ * return $0: source cell
+ * return $1: destination cell
+ */
+inline _cpy {
+  __org($2) [-]
+  __rel($2, $0)
+  [
+    __rel($0, $1) +
+    __rel($1, $2) +
+    __rel($2, $0) -
+  ]
+  __rel($0, $2)
+  [
+    __rel($2, $0) +
+    __rel($0, $2) -
+  ]
+  __ret($2)
+}
+
+/*
+ * _dadd: Destructive add $0 to $1
+ *
+ * param $0: source cell
+ * param $1: result cell
+ *
+ * return $1: result
+ */
+inline _dadd {
+  __org($0)
+  [
+    __rel($0, $1) +
+    __rel($1, $0) -
+  ]
+  __ret($0)
+}
+
+/*
+ * _mul: Multiply $0 = $0 * $1
+ *
+ * param $0: result cell
+ * param $1: factor cell
+ * param $2: temp0
+ * param $3: temp1
+ *
+ * return $0: result
+ * return $1: factor
+ */
+inline _mul {
+  __org($2) [-]
+  __rel($2, $3) [-]
+  __rel($3, $0)
+  [
+    __rel($0, $3) +
+    __rel($3, $0) -
+  ]
+  __rel($0, $3)
+  [
+    __rel($3, $1)
+    [
+      __rel($1, $0) +
+      __rel($0, $2) +
+      __rel($2, $1) -
+    ]
+    __rel($1, $2)
+    [
+      __rel($2, $1) +
+      __rel($1, $2) -
+    ]
+    __rel($2, $3) -
+  ]
+  [-]
+  __rel($3, $2)[-]
+  __ret($2)
+}
+
+/*
+ * _swp: Swap $0 and $1
+ *
+ * param $0: first
+ * param $1: second
+ * param $2: temp0
+ *
+ * return $0: second
+ * return $1: first
+ */
+inline _swp {
+  __org($2) [-]
+  __rel($2, $0)
+  [
+    __rel($0, $2) +
+    __rel($2, $0) -
+  ]
+  __rel($0, $1)
+  [
+    __rel($1, $0) +
+    __rel($0, $1) -
+  ]
+  __rel($1, $2)
+  [
+    __rel($2, $1) +
+    __rel($1, $2) -
+  ]
+  [-]
+  __ret($2)
+}
+
+inline _putb {
+    __gbl($0)
+    ++++++++++++
+    ++++++++++++
+    ++++++++++++
+    ++++++++++++
+    .
+    ------------
+    ------------
+    ------------
+    ------------
+    __ret($0)
+}
+
+/*
+ * add(a, b): a += b
+ *
+ * param a: a
+ * param b: b
+ *
+ * return a: a + b
+ * return b: b
+ */
+proc add(a, b) {
+  t0: byte = 0;
+  t1: byte = 0;
+
+  // t0 = a
+  _cpy(a, t0, t1);
+  _clr(t1);
+  
+  // b = b + a
+  _dadd(a, b);
+
+  // a = t0
+  _cpy(t0, a, t1);
+
+  // free t0 and t1
+  _clr(t1);
+  _clr(t0);
+}

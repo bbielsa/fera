@@ -1,0 +1,11 @@
+data {
+    x: byte;
+}
+
+proc add() {
+    x = 65;
+}
+
+entry {
+    add();
+}

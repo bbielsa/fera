@@ -1,0 +1,18 @@
+data {
+    x: byte;
+}
+
+proc init() {
+    x = 65;
+}
+
+inline _out {
+    __org($0)
+    .
+    __ret($0)
+}
+
+entry {
+    init();
+    _out(x);
+}
