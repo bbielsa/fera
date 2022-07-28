@@ -1,8 +1,8 @@
 program = [datablock] [procblock { procblock }] [entryblock]
 
 datablock = "data" initblock
-procblock = "proc" identifier codeblock
 inlineblock = "inline" identifier inlineblock
+procblock = "proc" identifier codeblock
 entryblock = "entry" codeblock
 
 inlineblock = "{}" | "{" inlinestmt { inlinestmt } "}"
@@ -15,13 +15,18 @@ stmt = assignstmt ";" | callstmt ";"
 assignstmt = identifier "=" expr
 callstmt = identifier arguments
 
+conditionstmt = ifstmt { elseifstmt } [ elsestmt ]
+ifstmt = "if" expr codeblock
+elseifstmt = "else if" expr codeblock
+elsestmt = "else" codeblock
+
 expr = value | callexpr
 callexpr = identifier arguments
 arguments = "()" | "(" expr {"," expr} ")"
 constarguments = "()" | "(" constant { "," constant } ")"
 constant = Number
 value = Name | Number
-type = "byte"
+type = "byte" | "byte" "[" Number "]"
 
 Directive = "__" Name constarguments
 Cmd = "+" | "-" | ">" | "<" | "." | "," | "[" | "]"

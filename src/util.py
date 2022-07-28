@@ -16,3 +16,28 @@ def flatten_productions(p):
     productions = [head] + tail
 
     return productions
+
+
+"""
+[
+    1,
+    2,
+    [
+        3
+    ]
+]
+
+"""
+
+def flatten_productions_sep(p):
+    if type(p) != list:
+        return [p]
+
+    tail = p.pop()
+
+    if type(tail) == list:
+        pass
+
+    flat = flatten_productions_sep(tail)
+    print("flat", flat)
+    return p + flat

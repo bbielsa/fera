@@ -1,6 +1,7 @@
 from scope import Identifier, IndexedIdentifier, Scope
-from parser import Program, DeclareStatement, CallInlineStatement, OriginDirectiveStatement, ReturnDirectiveStatement, CommandStatement
-from parser import DataBlock, EntryBlock, InlineBlock
+from tree import RelativeDirectiveStatement
+from tree import Program, DeclareStatement, CallInlineStatement, OriginDirectiveStatement, ReturnDirectiveStatement, CommandStatement
+from tree import DataBlock, EntryBlock, InlineBlock
 from command import Command, Comment
 import pprint
 
@@ -60,9 +61,8 @@ class CodeGenerator:
         self.emit_block(data_block)
 
         self.emit_comment("Text Segment")
-        self.push_scope()
+        # print(entry_block.body)
         self.emit_block(entry_block)
-        self.pop_scope()
     
     def push_scope(self, new_scope=None):
         if new_scope == None:
@@ -98,7 +98,7 @@ class CodeGenerator:
         self.emit_repeat(count, Command.SEEK_RIGHT)
     
     def emit_initialize(self, count):
-        self.emit_repeat(count, Command.INC)
+        self.emit_repeat(count.value, Command.INC)
 
     def emit_return(self, count):
         self.emit_repeat(count, Command.SEEK_LEFT)
@@ -145,7 +145,20 @@ class CodeGenerator:
 
         self.emit_return(ret.heap_pointer)
 
+    def emit_relative_directive(self, stmt, params):
+        origin = self.bind_parameter(stmt.parameters[0], params)
+        dest = self.bind_parameter(stmt.parameters[1], params)
+
+        relative = dest.heap_pointer - origin.heap_pointer
+
+        if relative > 0:
+            self.emit_seek(relative)
+        elif relative < 0:
+            relative = abs(relative)
+            self.emit_return(relative)
+
     def _program_get_inline_routine(self, name):
+        # print(self.program.inline_routines)
         blocks = filter(
             lambda r: r.identifier == name,
             self.program.inline_routines
@@ -165,8 +178,6 @@ class CodeGenerator:
         index = index_identifier.index
         param = params[index]
         name = param.name
-        print(self.scope[name].heap_pointer)
-        print("parameter", index, "is", name)
 
         return self.scope[name]
 
@@ -176,6 +187,8 @@ class CodeGenerator:
                 self.emit_origin_directive(stmt, parameters)
             elif type(stmt) == ReturnDirectiveStatement:
                 self.emit_return_directive(stmt, parameters)
+            elif type(stmt) == RelativeDirectiveStatement:
+                self.emit_relative_directive(stmt, parameters)
             elif type(stmt) == CommandStatement:
                 self.emit_command(stmt.command)
 
@@ -189,69 +202,12 @@ class CodeGenerator:
                 cursor += 1
                 result += command.value
 
-                if cursor == 24:
+                if pretty and cursor == 24:
                     result += "\n"
                     cursor = 0
-            elif type(command) == Comment:
+            elif pretty and type(command) == Comment:
                 result += "\n"
                 result += command.comment
                 result += "\n"
 
         return result
-
-
-clear = InlineBlock("_clr")
-clear.body = [
-    OriginDirectiveStatement(IndexedIdentifier(0)),
-    CommandStatement(Command.JUMP),
-    CommandStatement(Command.DEC),
-    CommandStatement(Command.LOOP),
-    ReturnDirectiveStatement(IndexedIdentifier(0))
-]
-
-dadd = InlineBlock("_dadd")
-dadd.body = [
-    OriginDirectiveStatement(IndexedIdentifier(0)),
-    
-    CommandStatement(Command.JUMP),
-
-    ReturnDirectiveStatement(IndexedIdentifier(0)),
-    OriginDirectiveStatement(IndexedIdentifier(1)),
-    CommandStatement(Command.INC),
-
-    ReturnDirectiveStatement(IndexedIdentifier(1)),
-    OriginDirectiveStatement(IndexedIdentifier(0)),
-    CommandStatement(Command.DEC),
-
-    CommandStatement(Command.LOOP),
-    
-    ReturnDirectiveStatement(IndexedIdentifier(0))
-]
-
-p = Program(
-    data_block=DataBlock(body=[
-        DeclareStatement('x'),
-        DeclareStatement('a', 4),
-        DeclareStatement('b', 6),
-        DeclareStatement('c', 255)
-    ]),
-    entry_block=EntryBlock(body=[
-        CallInlineStatement('_clr', [ Identifier('c') ]),
-        CallInlineStatement('_dadd', [ Identifier('a'), Identifier('c') ]),
-        CallInlineStatement('_dadd', [ Identifier('b'), Identifier('c') ]),
-    ]),
-    inline_routines=[
-        clear,
-        dadd
-    ],
-    procedures=[
-
-    ]
-)
-c = CodeGenerator(p)
-
-pp = pprint.PrettyPrinter(indent=4)
-pp.pprint(p)
-
-c.emit_program()
-print(c.compile())

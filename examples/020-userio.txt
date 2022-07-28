@@ -1,0 +1,30 @@
+data {
+    tries: byte = 0;
+    granted: byte = 0;
+    input: byte[255];
+    password: byte[16] = "SeCuRe pAsSwOrD";
+    success: byte[15] = "Access Granted";
+    denied: byte[14] = "Access Denied";
+    prompt: byte[10] = "password:";
+    locked: byte[16] = "Computer locked";
+    incorrect: byte[19] = "Incorrect Password";
+}
+
+entry {
+    while !granted && tries < 3 {
+        readLn(prompt, input);
+
+        if input == password {
+            granted = true;
+            print(success);
+        }
+        else {
+            tries++;
+            print(incorrect);
+        }
+    }
+
+    if !granted && tries == 3 {
+        print(locked);
+    }
+}
