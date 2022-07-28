@@ -1,0 +1,23 @@
+data {
+    x: byte = 100;
+    value: byte;
+
+    // temporary
+    t1: byte;
+    t2: byte; 
+    t3: byte;
+    t4: byte;
+    tres: byte;
+}
+
+entry {
+    if value >= 200 {
+        value = 2;
+    }
+    else if value >= 100 && value < 200 {
+        value = 1;
+    }
+    else {
+        value = 0;
+    }
+}

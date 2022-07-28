@@ -1,248 +1,165 @@
-from ply.lex import lex
-from ply.yacc import yacc
-from util import flatten_productions
+from parser import parse
+from scope import Identifier
+from tree import CallInlineStatement
+from codegen import CodeGenerator
 
-# --- Tokenizer
+code = '''
+    data {
+        x: byte = 255;
+        y: byte = 69;
+    }
 
-# All tokens must be named in advance.
-tokens = ( 
-    'KWDATA', 'KWPROC', 'KWENTRY', 'LBRACKET', 'RBRACKET', 
-    'LPAREN', 'RPAREN',
-    'TYPE', 'IDENT', 'IIDENT', 'DIDENT', 'COLON', 'SEMICOLON', 
-    'ASSIGN', 'LITERAL', 'KWINLINE',
-    'LSQBRACKET', 'RSQBRACKET', 'PLUS', 'MINUS', 'LPTBRACKET',
-    'RPTBRACKET', 'POINT', 'COMMA'
-)
+    inline _clr {
+        __org($0)
+        [-]
+        __ret($0)
+    }
 
-# Ignored characters
-t_ignore = ' \t'
+    entry {
+    }
+'''
 
-RESERVED = {
-    'data': 'KWDATA',
-    'entry': 'KWENTRY',
-    'proc': 'KWPROC',
-    'inline': 'KWINLINE',
-    'byte': 'TYPE'
-}
+add = '''
+    data {
+        x: byte = 45;
+        y: byte = 200;
+    }
 
-# Token matching rules are written as regexs
-t_LBRACKET = r'\{'
-t_RBRACKET = r'\}'
-t_COLON = r':'
-t_SEMICOLON = r';'
-t_ASSIGN = r'='
-t_LPAREN = r'\('
-t_RPAREN = r'\)'
+    inline _dadd {
+        __org($0)
+        [
+        __rel($0, $1) +
+        __rel($1, $0) -
+        ]
+        __ret($0)
+    }
 
-t_LSQBRACKET = r'\['
-t_RSQBRACKET = r'\]'
-t_PLUS = r'\+'
-t_MINUS = r'\-'
-t_LPTBRACKET = r'<'
-t_RPTBRACKET = r'>'
-t_POINT = r'\.'
-t_COMMA = r','
+    entry {
+    }
+'''
 
-def t_NUMBER(t):
-    r'\d+'
-    t.value = int(t.value)
-    t.type = 'LITERAL'
-    return t
+'''
+    Notes:
+        - Loop 1 moves i to blank space of array
+        - Loop 2 restores i
 
-def t_IDENT(t):
-    r'[a-zA-Z][a-zA-Z0-9_]*'
-    t.type = RESERVED.get(t.value, 'IDENT')
-    return t
+'''
 
-def t_DIDENT(t):
-    r'_{,2}[a-zA-Z]+'
-    t.type = RESERVED.get(t.value, 'DIDENT')
-    return t
+arr = '''
+    data {
+        res: byte = 0;
+        i: byte = 0;
 
-def t_IIDENT(t):
-    r'\$[0-9]+'
-    t.type = RESERVED.get(t.value, 'IIDENT')
-    return t
+        arr: byte = 0;
+        r: byte = 0;
+        w: byte = 0;
+        d: byte = 0;
 
-# def t_COMMAND(t):
-#     r'[\[\]\+\-\<\>\.\,]'
-#     t.type = RESERVED.get(t.value, 'COMMAND')
-#     return t
+        a1: byte = 104;
+        a2: byte = 101;
+        a3: byte = 108;
+        a4: byte = 108;
+        a5: byte = 111;
+        a6: byte = 32;
+        a7: byte = 119;
+        a8: byte = 111;
+        a9: byte = 114;
+        a10: byte = 108;
+        a11: byte = 100;
+        a12: byte = 10;
+        a13: byte = 0;
+    }
 
-# Ignored token with an action associated with it
-def t_ignore_newline(t):
-    r'\n+'
-    t.lexer.lineno += t.value.count('\n')
+    inline _get {
+        __org($2)
+        [
+            - 
+            __rel($2, $1) +
+            > +
+            < __rel($1, $2) 
+        ]
+        __rel($2, $1)
+        [
+            - __rel($1, $2)
+            + __rel($2, $1)
+        ]
+        __rel($1, $2)
+        [
+            -
+            __rel($2, $1) +
+            >> +
+            << __rel($1, $2)
+        ]
+        __rel($2, $1)
+        [
+            - __rel($1, $2)
+            + __rel($2, $1)
+        ]
+        >[>>>[-<<<<+>>>>]<<[->+<]<[->+<]>-]
+        >>>[-<+<<+>>>]<<<[->>>+<<<]>
+        [[-<+>]>[-<+>]<<<<[->>>>+<<<<]>>-]<<
+        __rel($1, $0) [-]
+        __rel($0, $1) >>>
+        [
+            - 
+            <<< __rel($1, $0) +
+            >>> __rel($0, $1)
+        ]
+        <<< __ret($1)
+    }
 
-# Error handler for illegal characters
-def t_error(t):
-    print(f'Illegal character {t.value[0]!r}')
-    t.lexer.skip(1)
+    inline _puts {
+        __org($0) >>>
+        [-]
+        >
+        [.>]
+        <
+        [<]
+        <<< __ret($0)
+    }
 
-# Build the lexer object
-lexer = lex()
-    
-# --- Parser
+    inline _inc {
+        __org($0)
+        +
+        __ret($0)
+    }
+
+    entry {
+
+    }
+'''
 
 
-def p_program(p):
-    '''
-    program : data_block 
-            | data_block code_block_region entry_block
-            | empty
-    '''
-    _, *blocks = p
-    p[0] = ('program', *blocks)
+# res = arr[i]
+program = parse(arr)
+program.entry_block.body = [
+    # # h
+    # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),
+    # CallInlineStatement('_inc', [ Identifier('i') ]),
+    # CallInlineStatement('_print', [ Identifier('res') ]),
+    # # e
+    # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),
+    # CallInlineStatement('_inc', [ Identifier('i') ]),
+    # CallInlineStatement('_print', [ Identifier('res') ]),
+    # # l
+    # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),
+    # CallInlineStatement('_inc', [ Identifier('i') ]),
+    # CallInlineStatement('_print', [ Identifier('res') ]),
+    # # l
+    # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),
+    # CallInlineStatement('_inc', [ Identifier('i') ]),
+    # CallInlineStatement('_print', [ Identifier('res') ]),
+    # # o
+    # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),
+    # CallInlineStatement('_inc', [ Identifier('i') ]),
+    # CallInlineStatement('_print', [ Identifier('res') ])
+    CallInlineStatement('_puts', [ Identifier('arr') ]),
+]
 
-def p_empty(p):
-    '''
-    empty : 
-    '''
+# print(program.inline_routines)
 
-def p_code_block_region(p):
-    '''
-    code_block_region : proc_block code_block_region
-                      | inline_block code_block_region
-                      | empty
-    '''
-    _, *stmts = p
-    code_blocks = flatten_productions(stmts)
-    p[0] = code_blocks
+codegen = CodeGenerator(program)
+codegen.emit_program()
+compiled = codegen.compile(pretty=False)
 
-def p_proc_block(p):
-    '''
-    proc_block : KWPROC LBRACKET RBRACKET
-    '''
-    p[0] = ('proc', [])
-
-def p_inline_block(p):
-    '''
-    inline_block : KWINLINE DIDENT LBRACKET inline_region RBRACKET
-    '''
-    stmts = flatten_productions(p[4])
-    p[0] = ('inline', p[2], stmts)
-
-def p_entry_block(p):
-    '''
-    entry_block : KWENTRY LBRACKET RBRACKET
-    '''
-    p[0] = ('entry', [])
-
-def p_data_block(p):
-    '''
-    data_block : KWDATA LBRACKET init_region RBRACKET
-    '''
-    count = len(p)
-
-    if count == 4:
-        p[0] = ('data', [])
-    else:
-        init_stmts = flatten_productions(p[3])
-        p[0] = ('data', init_stmts)
-
-def p_inline_region(p):
-    '''
-    inline_region : inline_stmt inline_region
-                  | empty
-    '''
-    _, *stmts = p
-    p[0] = stmts
-
-def p_command_stmt(p):
-    '''
-    command_statement : PLUS
-                      | MINUS
-                      | RSQBRACKET
-                      | LSQBRACKET
-                      | RPTBRACKET
-                      | LPTBRACKET
-                      | POINT
-                      | COMMA
-    '''
-    p[0] = p[1]
-
-def p_inline_stmt(p):
-    '''
-    inline_stmt : command_statement
-                | directive_stmt
-    '''
-    p[0] = p[1]
-
-def p_directive_args_list(p):
-    # 
-    '''
-    directive_args_list : IIDENT
-                        | IIDENT COMMA directive_args_list
-                        | empty
-    '''
-    p[0] = p[1]
-
-def p_directive_args(p):
-    '''
-    directive_args : LPAREN directive_args_list RPAREN
-    '''
-    p[0] = p[2]
-
-def p_directive_stmt(p):
-    '''
-    directive_stmt : DIDENT directive_args
-    '''
-    p[0] = ('directive', p[1], p[2])
-
-def p_init_region(p):
-    '''
-    init_region : init_stmt init_region
-                | empty
-    '''
-    _, *stmts = p
-    p[0] = stmts
-
-def p_init_stmt(p):
-    '''
-    init_stmt : IDENT COLON TYPE SEMICOLON
-              | IDENT COLON TYPE ASSIGN LITERAL SEMICOLON
-    '''
-    is_init = len(p) == 7
-
-    if is_init:
-        p[0] = ('init_stmt', p[1], p[3], p[5])
-    else:
-        p[0] = ('init_stmt', p[1], p[3])
-
-def p_error(p):
-    print(f'Syntax error at {p.value!r}')
-
-if __name__ == "__main__":
-    # Build the parser
-    parser = yacc(debug=True)
-
-    program = '''
-        data {
-            a: byte = 255;
-            b: byte = 4;
-        }
-
-        inline _clr {
-            __org($0)
-            [-]
-            __ret($0)
-        }
-
-        inline _out {
-            __org($0)
-            .
-            __ret($0)
-        }
-
-        inline _sete {
-        
-        }
-
-        entry {
-
-        }
-    '''
-
-    # Parse an expression
-    ast = parser.parse(program)
-    print(ast)
+print(compiled)
