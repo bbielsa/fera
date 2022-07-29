@@ -2,7 +2,14 @@ from ast import Index
 from ply.lex import lex
 from ply.yacc import yacc
 from scope import Identifier
-from tree import ReturnDirectiveStatement
+from tree import WhileStatement
+from tree import ForStatement
+from tree import ConditionalStatement
+from tree import ProcedureBlock
+from tree import CallInlineStatement
+from tree import CallProcedureStatement
+from tree import AssignStatement
+from tree import ReturnDirectiveStatement, BinaryExpression
 from tree import OriginDirectiveStatement, RelativeDirectiveStatement
 from tree import Program
 from tree import InlineBlock
@@ -20,11 +27,11 @@ from util import flatten_productions, flatten_productions_sep
 # All tokens must be named in advance.
 tokens = ( 
     'KWDATA', 'KWPROC', 'KWENTRY', 'LBRACKET', 'RBRACKET', 
-    'LPAREN', 'RPAREN',
+    'LPAREN', 'RPAREN', 'IF', 'ELSE', 'FOR', 'WHILE', 'ASTERISK', 'FSLASH',
     'TYPE', 'IDENT', 'IIDENT', 'DIDENT', 'COLON', 'SEMICOLON', 
     'ASSIGN', 'LITERAL', 'KWINLINE',
     'LSQBRACKET', 'RSQBRACKET', 'PLUS', 'MINUS', 'LPTBRACKET',
-    'RPTBRACKET', 'POINT', 'COMMA'
+    'RPTBRACKET', 'POINT', 'COMMA', 'ELLIPSIS'
 )
 
 # Ignored characters
@@ -35,7 +42,11 @@ RESERVED = {
     'entry': 'KWENTRY',
     'proc': 'KWPROC',
     'inline': 'KWINLINE',
-    'byte': 'TYPE'
+    'byte': 'TYPE',
+    'if': 'IF',
+    'else': 'ELSE',
+    'for': 'FOR',
+    'while': 'WHILE'
 }
 
 # Token matching rules are written as regexs
@@ -51,10 +62,13 @@ t_LSQBRACKET = r'\['
 t_RSQBRACKET = r'\]'
 t_PLUS = r'\+'
 t_MINUS = r'\-'
+t_ASTERISK = r'\*'
+t_FSLASH = r'/'
 t_LPTBRACKET = r'<'
 t_RPTBRACKET = r'>'
 t_POINT = r'\.'
 t_COMMA = r','
+t_ELLIPSIS = r'\.\.\.'
 
 def t_NUMBER(t):
     r'\d+'
@@ -91,7 +105,6 @@ def t_error(t):
 lexer = lex()
     
 # --- Parser
-
 
 def p_program(p):
     '''
@@ -132,9 +145,9 @@ def p_code_block_region_2(p):
 
 def p_proc_block(p):
     '''
-    proc_block : KWPROC LBRACKET RBRACKET
+    proc_block : KWPROC IDENT proc_params LBRACKET stmt_list RBRACKET
     '''
-    p[0] = ('proc', [])
+    p[0] = ProcedureBlock(p[2], body=p[5], params=p[3])
 
 def p_inline_block(p):
     '''
@@ -145,12 +158,167 @@ def p_inline_block(p):
     # p[0] = ('inline', p[2], stmts)
     p[0] = InlineBlock(name, body=stmts)
     
+def p_param_decl(p):
+    '''
+    param_decl : IDENT COLON type
+    '''
+    p[0] = DeclareStatement(p[1], p[3])
+
+def p_param_decl_list_1(p):
+    '''
+    param_decl_list : param_decl
+                    | empty
+    '''
+    p[0] = [p[1]]
+
+def p_param_decl_list_2(p):
+    '''
+    param_decl_list : param_decl_list COMMA param_decl
+    '''
+    p[0] = p[1] + [p[3]]
+
+def p_proc_params(p):
+    '''
+    proc_params : LPAREN param_decl_list RPAREN
+    '''
+    p[0] = p[2]
 
 def p_entry_block(p):
     '''
-    entry_block : KWENTRY LBRACKET RBRACKET
+    entry_block : KWENTRY LBRACKET stmt_list RBRACKET
     '''
-    p[0] = EntryBlock()
+    p[0] = EntryBlock(p[3])
+
+def p_stmt_list_1(p):
+    '''
+    stmt_list : stmt
+              | empty
+    '''
+    p[0] = [p[1]]
+
+def p_stmt_list_2(p):
+    '''
+    stmt_list : stmt_list stmt
+    '''
+    p[0] = p[1] + [p[2]]
+
+def p_stmt(p):
+    '''
+    stmt : assign_stmt SEMICOLON
+         | call_proc_stmt SEMICOLON
+         | call_inline_stmt SEMICOLON
+         | conditional_stmt
+         | for_stmt
+         | while_stmt
+    '''
+    p[0] = p[1]
+
+def p_while_stmt(p):
+    '''
+    while_stmt : WHILE rval LBRACKET stmt_list RBRACKET
+    '''
+    p[0] = WhileStatement(p[2], body=p[4])
+
+def p_for_stmt(p):
+    '''
+    for_stmt : FOR identifier ASSIGN rval ELLIPSIS rval LBRACKET stmt_list RBRACKET
+    '''
+    p[0] = ForStatement(p[2], p[4], p[6], body=p[8])
+
+def p_conditional_stmt(p):
+    '''
+    conditional_stmt : IF rval LBRACKET stmt_list RBRACKET
+                     | IF rval LBRACKET stmt_list RBRACKET ELSE LBRACKET stmt_list RBRACKET
+    '''
+    p[0] = ConditionalStatement(p[2], then_body=p[4], else_body=p[8])
+
+def p_call_arg(p):
+    '''
+    call_arg : rval
+    '''
+    p[0] = p[1]
+
+def p_call_args_list_1(p):
+    '''
+    call_args_list : call_arg
+                   | empty
+    '''
+    p[0] = [p[1]]
+
+def p_call_args_list_2(p):
+    '''
+    call_args_list : call_args_list COMMA call_arg
+    '''
+    p[0] = p[1] + [p[3]]
+
+def p_call_args(p):
+    '''
+    call_args : LPAREN call_args_list RPAREN
+    '''
+    p[0] = p[2]
+
+def p_call_proc_stmt(p):
+    '''
+    call_proc_stmt : IDENT call_args
+    '''
+    p[0] = CallProcedureStatement(p[1], p[2])
+
+def p_call_inline_stmt(p):
+    '''
+    call_inline_stmt : DIDENT call_args
+    '''
+    p[0] = CallInlineStatement(p[1], p[2])
+
+def p_assign_stmt(p):
+    '''
+    assign_stmt : identifier ASSIGN expr
+    '''
+    p[0] = AssignStatement(p[1], p[3])
+
+def p_binary_expr(p):
+    '''
+    expr : expr PLUS expr
+         | expr MINUS expr
+    '''
+    p[0] = BinaryExpression(p[2], p[1], p[3])
+
+def p_expr_term(p):
+    '''
+    expr : term
+    '''
+    p[0] = p[1]
+
+def p_term(p):
+    '''
+    term : term ASTERISK term
+         | term FSLASH term
+    '''
+    p[0] = BinaryExpression(p[2], p[1], p[3])
+
+def p_term_factor(p):
+    '''
+    term : factor
+    '''
+    p[0] = p[1]
+
+def p_factor_paren(p):
+    '''
+    factor : LPAREN expr RPAREN
+    '''
+    p[0] = p[2]
+
+def p_factor(p):
+    '''
+    factor : identifier
+           | constant_expression
+    '''
+    p[0] = p[1]
+
+def p_rval(p):
+    '''
+    rval : expr
+    '''
+    p[0] = p[1]
 
 def p_data_block(p):
     '''
@@ -281,7 +449,7 @@ def p_constant_expression(p):
     p[0] = constant
 
 def p_error(p):
-    print(f'Syntax error at {p.value!r}')
+    print(f'Syntax error at {p.value!r} {p.lineno}')
 
 def parse(program):
     parser = yacc()

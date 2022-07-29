@@ -22,6 +22,12 @@ class ConstantExpression(Expression):
     def __init__(self, value):
         self.value = value
 
+class BinaryExpression(Expression):
+    def __init__(self, operator, left, right):
+        self.operator = operator
+        self.left = left
+        self.right = right
+
 #
 # Statements
 #
@@ -36,11 +42,21 @@ class DeclareStatement(Statement):
         self.type = type
         self.constant = const
 
+class AssignStatement(Statement):
+    def __init__(self, id, value):
+        self.identifier = id
+        self.value = value
+
 class CommandStatement(Statement):
     def __init__(self, command):
         self.command = command
 
 class CallInlineStatement(Statement):
+    def __init__(self, name, parameters):
+        self.identifier = name
+        self.parameters = parameters
+
+class CallProcedureStatement(Statement):
     def __init__(self, name, parameters):
         self.identifier = name
         self.parameters = parameters
@@ -64,6 +80,24 @@ class RelativeDirectiveStatement(DirectiveStatement):
         self.parameters = [base, offset]
         self.identifier = "__rel"
 
+class ConditionalStatement(Statement):
+    def __init__(self, expression, then_body=[], else_body=[]):
+        self.expression = expression
+        self.then_body = then_body
+        self.else_body = else_body
+
+class ForStatement(Statement):
+    def __init__(self, ident, from_value, to_value, body=[]):
+        self.identifier = ident
+        self.from_value = from_value
+        self.to_value = to_value
+        self.body = body
+
+class WhileStatement(Statement):
+    def __init__(self, expression, body=[]):
+        self.expression = expression
+        self.body = body
+
 #
 # Blocks
 #
@@ -77,6 +111,13 @@ class InlineBlock(Block):
         super().__init__(body)
         self.identifier = name
         self.type = "inline"
+
+class ProcedureBlock(Block):
+    def __init__(self, name, body=[], params=[]):
+        super().__init__(body)
+        self.identifier = name
+        self.parameters = params
+        self.type = "procedure"
 
 class DataBlock(Block):
     def __init__(self, body=[]):
