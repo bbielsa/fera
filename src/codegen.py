@@ -1,4 +1,7 @@
 from scope import Identifier, IndexedIdentifier, Scope
+from tree import CallProcedureStatement
+from tree import ConstantExpression
+from tree import AssignStatement
 from tree import RelativeDirectiveStatement
 from tree import Program, DeclareStatement, CallInlineStatement, OriginDirectiveStatement, ReturnDirectiveStatement, CommandStatement
 from tree import DataBlock, EntryBlock, InlineBlock
@@ -131,9 +134,37 @@ class CodeGenerator:
             self.emit_declare(stmt)
         elif type(stmt) == CallInlineStatement:
             self.emit_call_inline(stmt)
+        elif type(stmt) == AssignStatement:
+            self.emit_assign_statement(stmt)
+        elif type(stmt) == CallProcedureStatement:
+            self.emit_call_procedure(stmt)
+        elif stmt == None:
+            pass
         else:
+            print("Error statement type not implemented")
             print(type(stmt))
-            raise ValueError()
+            raise NotImplementedError()
+
+    def emit_call_procedure(self, stmt):
+        raise NotImplementedError()
+
+    def emit_assign_statement(self, stmt):
+        identifier = self.scope[stmt.identifier.name]
+        cell = identifier.heap_pointer
+        value = stmt.value
+
+        if type(value) == ConstantExpression:
+            self.emit_seek(cell)
+            self.emit_clear_cell(cell)
+            self.emit_repeat(value.value, Command.INC)
+            self.emit_return(cell)
+        else:
+            raise NotImplementedError()
+
+    def emit_clear_cell(self, cell):
+        self.emit_command(Command.JUMP)
+        self.emit_command(Command.DEC)
+        self.emit_command(Command.LOOP)
 
     def emit_origin_directive(self, stmt, params):
         origin = self.bind_parameter(stmt.parameters[0], params)

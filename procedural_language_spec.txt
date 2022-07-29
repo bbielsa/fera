@@ -11,7 +11,7 @@ codeblock = "{}" | "{" stmt { stmt } "}"
 
 inlinestmt = Cmd | Directive
 initstmt = identifier ":" type "=" constant ";"
-stmt = assignstmt ";" | callstmt ";"
+stmt = assignstmt ";" | callstmt ";" | ifstmt | forstmt | whilestmt
 assignstmt = identifier "=" expr
 callstmt = identifier arguments
 
@@ -19,6 +19,9 @@ conditionstmt = ifstmt { elseifstmt } [ elsestmt ]
 ifstmt = "if" expr codeblock
 elseifstmt = "else if" expr codeblock
 elsestmt = "else" codeblock
+
+forstmt = "for" identifier "=" range codeblock
+whilestmt = "while" expr codeblock
 
 expr = value | callexpr
 callexpr = identifier arguments
