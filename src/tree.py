@@ -15,6 +15,14 @@ class Type(Node):
     def __init__(self, name):
         self.name = name
 
+class ArrayType(Node):
+    # contained = type contained within the array
+    # count = the number of items in the array 
+    def __init__(self, contained, count, value=[]):
+        self.contained = contained
+        self.count = count
+        self.value = value
+
 class Expression(Node):
     pass
 
