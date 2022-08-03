@@ -121,6 +121,15 @@ class CodeGenerator:
         cmd = Comment(comment)
         self.emit_command(cmd)
 
+    def emit_initialize_string(self, ident, type, constant):
+        byte_array = map(
+            lambda c: ConstantExpression(ord(c)),
+            constant.value
+        )
+        byte_array = list(byte_array)
+
+        self.emit_initialize_array(ident, type, byte_array)
+
     def emit_initialize_array(self, ident, type, constant):
         count = type.count
         items = len(constant)
@@ -148,8 +157,10 @@ class CodeGenerator:
         if stmt.constant == None:
             return
 
-        if type(stmt.type) == ArrayType:
+        if type(stmt.type) == ArrayType and type(stmt.constant) == list:
             self.emit_initialize_array(ident, stmt.type, stmt.constant)
+        elif type(stmt.type) == ArrayType and type(stmt.constant) == ConstantExpression:
+            self.emit_initialize_string(ident, stmt.type, stmt.constant)
         else:
             self.emit_seek(ident.heap_pointer)
             self.emit_initialize(stmt.constant)
@@ -199,7 +210,6 @@ class CodeGenerator:
 
     def emit_return_directive(self, stmt, params):
         ret = self.bind_parameter(stmt.parameters[0], params)
-
         self.emit_return(ret.heap_pointer)
 
     def emit_relative_directive(self, stmt, params):
@@ -215,7 +225,6 @@ class CodeGenerator:
             self.emit_return(relative)
 
     def _program_get_inline_routine(self, name):
-        # print(self.program.inline_routines)
         blocks = filter(
             lambda r: r.identifier == name,
             self.program.inline_routines

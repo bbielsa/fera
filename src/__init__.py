@@ -226,7 +226,7 @@ decl_array = '''
         z: byte = 24;
         y: byte[10];
         w: byte[200] = { 1, 2, 3, 4 };
-        a: byte[13] = { 72,69,76,76,79,32,87,79,82,76,68,33 };
+        a: byte[13] = "hello world!";
         x: byte = 25;
     }
 
@@ -244,8 +244,60 @@ decl_array = '''
         _puts(a);
     }
 '''
+'''
 
-program = parse(decl_array)
+'''
+irc = '''
+    data {
+        input: byte[15];
+        count: byte = 10;
+        nick_msg: byte[17] = "NICK toastie_bot";
+        user_msg: byte[59] = "USER toastie_bot toastie_bot irc.libera.chat :Toasty bread";
+        info_join: byte[17] = "Joined channel: ";
+    }
+
+    inline _putsln {
+        __org($0)
+        >>>>
+        [.>]
+        ++++++++++ .
+        ----------
+        <
+        [<]
+        <<<
+        __ret($0)
+    }
+
+    inline _readln {
+        __org($0)
+        >>>
+        +
+        [
+            ++++++++++
+            > ,
+            ----------
+        ]
+        <[<]
+        >[-]
+        <<<
+        __ret($0)
+    }
+
+    proc on_join() {
+
+    }
+
+    proc on_msg() {
+
+    }
+
+    entry {
+        _putsln(nick_msg);
+        _putsln(user_msg);
+    }
+'''
+
+program = parse(irc)
 # print(program.data_block.body[1].constant[2].value)
 codegen = CodeGenerator(program)
 codegen.emit_program()
