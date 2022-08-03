@@ -1,0 +1,13 @@
+data {
+    a: int;
+    b: int;
+}
+
+struct int {
+    v: byte[4];
+}
+
+proc operator+(a: int, b: int) {
+    
+}
+
