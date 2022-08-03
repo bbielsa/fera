@@ -223,44 +223,30 @@ math = '''
 
 decl_array = '''
     data {
-        a: byte[10];
-        b: byte[3] { 1, 2, 3 };
+        z: byte = 24;
+        y: byte[10];
+        w: byte[200] = { 1, 2, 3, 4 };
+        a: byte[13] = { 72,69,76,76,79,32,87,79,82,76,68,33 };
+        x: byte = 25;
+    }
+
+    inline _puts {
+        __org($0)
+        >>>>
+        [.>]
+        <
+        [<]
+        <<<
+        __ret($0)
     }
 
     entry {
-        
+        _puts(a);
     }
 '''
 
-# res = arr[i]
 program = parse(decl_array)
-print(program.data_block.body[1].type.value[2].value)
-# program.entry_block.body = [
-    # # h
-    # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),
-    # CallInlineStatement('_inc', [ Identifier('i') ]),
-    # CallInlineStatement('_print', [ Identifier('res') ]),
-    # # e
-    # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),
-    # CallInlineStatement('_inc', [ Identifier('i') ]),
-    # CallInlineStatement('_print', [ Identifier('res') ]),
-    # # l
-    # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),
-    # CallInlineStatement('_inc', [ Identifier('i') ]),
-    # CallInlineStatement('_print', [ Identifier('res') ]),
-    # # l
-    # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),
-    # CallInlineStatement('_inc', [ Identifier('i') ]),
-    # CallInlineStatement('_print', [ Identifier('res') ]),
-    # # o
-    # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),
-    # CallInlineStatement('_inc', [ Identifier('i') ]),
-    # CallInlineStatement('_print', [ Identifier('res') ])
-    # CallInlineStatement('_puts', [ Identifier('arr') ]),
-# ]
-
-# print(program.inline_routines)
-
+# print(program.data_block.body[1].constant[2].value)
 codegen = CodeGenerator(program)
 codegen.emit_program()
 compiled = codegen.compile(pretty=False)

@@ -423,6 +423,16 @@ def p_init_stmt(p):
     else:
         p[0] = DeclareStatement(init_id, init_type)
 
+def p_init_array_stmt(p):
+    '''
+    init_stmt : identifier COLON type ASSIGN const_array_expr SEMICOLON
+    '''
+    ident = p[1]
+    type = p[3]
+    value = p[5]
+
+    p[0] = DeclareStatement(ident, type, value)
+
 def p_identifier(p):
     '''
     identifier : IDENT
@@ -453,15 +463,6 @@ def p_const_array_expr(p):
     const_array_expr : LBRACKET const_expr_list RBRACKET
     '''
     p[0] = p[2]
-
-def p_type_array_init(p):
-    '''
-    type : type LSQBRACKET LITERAL RSQBRACKET const_array_expr
-    '''
-    contained = p[1]
-    count = int(p[3])
-    expr = p[5]
-    p[0] = ArrayType(contained, count, value=expr)
 
 def p_const_expr_list_1(p):
     '''
