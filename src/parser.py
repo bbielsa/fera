@@ -31,7 +31,7 @@ tokens = (
     'TYPE', 'IDENT', 'IIDENT', 'DIDENT', 'COLON', 'SEMICOLON', 
     'ASSIGN', 'LITERAL', 'KWINLINE',
     'LSQBRACKET', 'RSQBRACKET', 'PLUS', 'MINUS', 'LPTBRACKET',
-    'RPTBRACKET', 'POINT', 'COMMA', 'ELLIPSIS'
+    'RPTBRACKET', 'POINT', 'COMMA', 'ELLIPSIS', 'STRING'
 )
 
 # Ignored characters
@@ -69,6 +69,7 @@ t_RPTBRACKET = r'>'
 t_POINT = r'\.'
 t_COMMA = r','
 t_ELLIPSIS = r'\.\.\.'
+t_STRING = r'\".*?\"'
 
 def t_NUMBER(t):
     r'\d+'
@@ -475,6 +476,14 @@ def p_const_expr_list_2(p):
     const_expr_list : const_expr_list COMMA constant_expression
     '''
     p[0] = p[1] + [p[3]]
+
+def p_const_string(p):
+    '''
+    constant_expression : STRING
+    '''
+    # cut off the beginning and end quote
+    value = p[1][1:-1]
+    p[0] = ConstantExpression(value)
 
 def p_constant_expression(p):
     '''
