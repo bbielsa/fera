@@ -1,3 +1,4 @@
+from tree import Type, ArrayType
 from scope import Identifier, IndexedIdentifier, Scope
 from tree import CallProcedureStatement
 from tree import ConstantExpression
@@ -8,14 +9,28 @@ from tree import DataBlock, EntryBlock, InlineBlock
 from command import Command, Comment
 import pprint
 
-class Allocator:
-    @classmethod
-    def sizeof(self, declaractions):
-        return len(declaractions.body)
+class StaticAllocator:
+    array_header_size = 4
+
+    def __init__(self):
+        self.size = 0
+        self.members = []
 
     @classmethod
-    def reserve(self, size, base=0):
-        return range(base, base + size)
+    def sizeof(self, t):
+        if type(t) == Type:
+            return 1
+        elif type(t) == ArrayType:
+            contained_type = t.contained
+            contained_size = StaticAllocator.sizeof(contained_type)
+
+            return t.count * contained_size + StaticAllocator.array_header_size
+
+    def reserve(self, ident, type):
+        size = StaticAllocator.sizeof(type)
+        ident.heap_pointer = self.size
+        self.members.append((ident, type))
+        self.size += size
 
 class CodeGenerator:
     def __init__(self, program):
@@ -25,6 +40,8 @@ class CodeGenerator:
         self.global_scope = Scope(None, 0)
         self.scope = self.global_scope
         self.scopes = [self.scope]
+
+        self.allocator = StaticAllocator()
 
         self.compiled = []
     
@@ -37,21 +54,8 @@ class CodeGenerator:
 
         return region[0]
 
-    def allocate(self, ident):
-
-        # if self.global_scope == self.scope:
-        scope_idents = self.scope.identifiers
-        scope_size = len(scope_idents)
-        scope_base = self.scope_base_heap(self.scope)
-
-        if ident.name == "z":
-            print("scope_base", scope_base)
-            print("scope_size", scope_size)
-        ident.heap_pointer = scope_base + scope_size
-        #     ident.heap_pointer = scope_size
-        # else:
-        #     raise ValueError()
-
+    def allocate(self, ident, type):
+        self.allocator.reserve(ident, type)
         self.scope.add(ident)
 
     def emit_program(self):
@@ -86,10 +90,10 @@ class CodeGenerator:
 
     def emit_block(self, block):
         # maybe this belongs in push_scope()?
-        size = Allocator.sizeof(block)
-        region = Allocator.reserve(size)
+        # size = Allocator.sizeof(block)
+        # region = Allocator.reserve(size)
 
-        self.data_regions.append(region)
+        # self.data_regions.append(region)
 
         return self.emit_body(block.body)
 
@@ -117,13 +121,35 @@ class CodeGenerator:
         cmd = Comment(comment)
         self.emit_command(cmd)
 
-    def emit_declare(self, stmt):
-        ident = stmt.identifier
+    def emit_initialize_array(self, ident, type, constant):
+        count = type.count
+        items = len(constant)
+
+        size = min(count, items)
+
+        self.emit_seek(ident.heap_pointer)
+        self.emit_seek(StaticAllocator.array_header_size)
         
-        self.allocate(ident)
+        for i in range(size):
+            self.emit_initialize(constant[i])
+            self.emit_seek(1)
+
+        self.emit_return(
+            ident.heap_pointer
+            + size
+            + StaticAllocator.array_header_size
+        )
+
+    def emit_declare(self, stmt):
+        ident = stmt.identifier   
+
+        self.allocate(stmt.identifier, stmt.type)
 
         if stmt.constant == None:
             return
+
+        if type(stmt.type) == ArrayType:
+            self.emit_initialize_array(ident, stmt.type, stmt.constant)
         else:
             self.emit_seek(ident.heap_pointer)
             self.emit_initialize(stmt.constant)
