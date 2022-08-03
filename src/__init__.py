@@ -221,9 +221,20 @@ math = '''
     }
 '''
 
+decl_array = '''
+    data {
+        a: byte[10];
+        b: byte[3] { 1, 2, 3 };
+    }
+
+    entry {
+        
+    }
+'''
+
 # res = arr[i]
-program = parse(math)
-print(program.entry_block.body[0].value.operator)
+program = parse(decl_array)
+print(program.data_block.body[1].type.value[2].value)
 # program.entry_block.body = [
     # # h
     # CallInlineStatement('_get', [ Identifier('res'), Identifier('arr'), Identifier('i') ]),

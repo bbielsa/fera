@@ -16,7 +16,7 @@ from tree import InlineBlock
 from tree import DataBlock
 from tree import EntryBlock
 from tree import ConstantExpression
-from tree import DeclareStatement, Type
+from tree import DeclareStatement, Type, ArrayType
 from tree import CommandStatement
 from scope import IndexedIdentifier
 from command import Command
@@ -439,6 +439,41 @@ def p_type(p):
     name = p[1]
     parsed_type = Type(name)
     p[0] = parsed_type
+
+def p_type_array(p):
+    '''
+    type : type LSQBRACKET LITERAL RSQBRACKET
+    '''
+    contained = p[1]
+    count = int(p[3])
+    p[0] = ArrayType(contained, count)
+
+def p_const_array_expr(p):
+    '''
+    const_array_expr : LBRACKET const_expr_list RBRACKET
+    '''
+    p[0] = p[2]
+
+def p_type_array_init(p):
+    '''
+    type : type LSQBRACKET LITERAL RSQBRACKET const_array_expr
+    '''
+    contained = p[1]
+    count = int(p[3])
+    expr = p[5]
+    p[0] = ArrayType(contained, count, value=expr)
+
+def p_const_expr_list_1(p):
+    '''
+    const_expr_list : constant_expression
+    '''
+    p[0] = [p[1]]
+
+def p_const_expr_list_2(p):
+    '''
+    const_expr_list : const_expr_list COMMA constant_expression
+    '''
+    p[0] = p[1] + [p[3]]
 
 def p_constant_expression(p):
     '''
