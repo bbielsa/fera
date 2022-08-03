@@ -8,5 +8,12 @@ data {
 entry {
     _get(a, fib, 0);
     _get(b, fib, 1);
-    _set(fib, 2, )
+
+    result = a + b;
+    result = add(a, b);
+    add(result, a, b);
+    _set(fib, 2, result);
+
+
+    
 }
