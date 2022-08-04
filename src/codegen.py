@@ -1,3 +1,4 @@
+from tree import ForStatement, WhileStatement
 from tree import Type, ArrayType
 from scope import Identifier, IndexedIdentifier, Scope
 from tree import CallProcedureStatement
@@ -166,6 +167,38 @@ class CodeGenerator:
             self.emit_initialize(stmt.constant)
             self.emit_return(ident.heap_pointer)
 
+    def emit_for(self, stmt):
+        ident = stmt.identifier
+        from_value = stmt.from_value
+        to_value = stmt.to_value
+        
+        self.allocate(ident, Type("byte"))
+
+        # initialize x
+        self.emit_seek(ident.heap_pointer)
+        self.emit_clear_cell(ident.heap_pointer)
+        self.emit_initialize(from_value)
+        
+        # evaluate x
+        self.emit_repeat(to_value.value + 1, Command.DEC)
+
+        # loop
+        self.emit_command(Command.JUMP)
+
+        # restore x
+        self.emit_repeat(to_value.value + 1, Command.INC)
+        self.emit_return(ident.heap_pointer)
+
+        #execute the body
+        self.emit_body(stmt.body)
+
+        # evaluate the loop condition and loop or break
+        self.emit_seek(ident.heap_pointer)
+        self.emit_repeat(to_value.value + 1, Command.DEC)
+        self.emit_command(Command.INC)
+        self.emit_command(Command.LOOP)
+        self.emit_return(ident.heap_pointer)
+
     def emit_statement(self, stmt):
         if type(stmt) == DeclareStatement:
             self.emit_declare(stmt)
@@ -175,6 +208,8 @@ class CodeGenerator:
             self.emit_assign_statement(stmt)
         elif type(stmt) == CallProcedureStatement:
             self.emit_call_procedure(stmt)
+        elif type(stmt) == ForStatement:
+            self.emit_for(stmt)
         elif stmt == None:
             pass
         else:
