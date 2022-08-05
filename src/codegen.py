@@ -10,6 +10,10 @@ from tree import DataBlock, EntryBlock, InlineBlock
 from command import Command, Comment
 import pprint
 
+class Cell:
+    def __init__(self, heap_pointer=None):
+        self.heap_pointer = heap_pointer
+
 class StaticAllocator:
     array_header_size = 4
 
@@ -32,6 +36,15 @@ class StaticAllocator:
         ident.heap_pointer = self.size
         self.members.append((ident, type))
         self.size += size
+
+    def alloc(self, type):
+        cell = Cell()
+        self.reserve(cell, type)
+
+        return cell
+
+    def free(self, cell):
+        pass
 
 class CodeGenerator:
     def __init__(self, program):
@@ -220,18 +233,67 @@ class CodeGenerator:
     def emit_call_procedure(self, stmt):
         raise NotImplementedError()
 
-    def emit_assign_statement(self, stmt):
-        identifier = self.scope[stmt.identifier.name]
-        cell = identifier.heap_pointer
-        value = stmt.value
+    def emit_expression(self, expr):
+        cell_type = Type("byte")
+        cell = self.allocator.alloc(cell_type)
 
-        if type(value) == ConstantExpression:
-            self.emit_seek(cell)
-            self.emit_clear_cell(cell)
-            self.emit_repeat(value.value, Command.INC)
-            self.emit_return(cell)
-        else:
-            raise NotImplementedError()
+        if type(expr) == ConstantExpression:
+            self.emit_seek(cell.heap_pointer)
+            self.emit_clear_cell(None)
+            self.emit_repeat(expr.value, Command.INC)
+            self.emit_return(cell.heap_pointer)
+
+            return cell
+        elif type(expr) == Identifier:
+            ident = self.scope[expr.name]
+            return ident
+
+        lhs = self.emit_expression(expr.left)
+        rhs = self.emit_expression(expr.right)
+
+        # Add operand 1
+        self.emit_seek(lhs.heap_pointer)
+        self.emit_command(Command.JUMP)
+        self.emit_return(lhs.heap_pointer)
+        self.emit_seek(cell.heap_pointer)
+        self.emit_command(Command.INC)
+        self.emit_return(cell.heap_pointer)
+        self.emit_seek(lhs.heap_pointer)
+        self.emit_command(Command.DEC)
+        self.emit_command(Command.LOOP)
+        self.emit_return(lhs.heap_pointer)
+
+        # Add operand 2
+        self.emit_seek(rhs.heap_pointer)
+        self.emit_command(Command.JUMP)
+        self.emit_return(rhs.heap_pointer)
+        self.emit_seek(cell.heap_pointer)
+        self.emit_command(Command.INC)
+        self.emit_return(cell.heap_pointer)
+        self.emit_seek(rhs.heap_pointer)
+        self.emit_command(Command.DEC)
+        self.emit_command(Command.LOOP)
+        self.emit_return(rhs.heap_pointer)
+
+        self.allocator.free(lhs)
+        self.allocator.free(rhs)
+
+        return cell
+
+    def emit_assign_statement(self, stmt):
+        dest_cell = self.scope[stmt.identifier.name]
+        source_cell = self.emit_expression(stmt.value)
+
+        self.emit_seek(source_cell.heap_pointer)
+        self.emit_command(Command.JUMP)
+        self.emit_return(source_cell.heap_pointer)
+        self.emit_seek(dest_cell.heap_pointer)
+        self.emit_command(Command.INC)
+        self.emit_return(dest_cell.heap_pointer)
+        self.emit_seek(source_cell.heap_pointer)
+        self.emit_command(Command.DEC)
+        self.emit_command(Command.LOOP)
+        self.emit_return(source_cell.heap_pointer)
 
     def emit_clear_cell(self, cell):
         self.emit_command(Command.JUMP)
