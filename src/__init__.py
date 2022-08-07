@@ -5,13 +5,24 @@ from codegen import CodeGenerator
 
 code = '''
     data {
-        x: byte = 10;
+        x: byte = 104;
         r: byte;
+        z: byte[100];
+        nl: byte = 10;
+    }
+
+    inline _putc {
+        __org($0)
+        .
+        __ret($0)
     }
 
     entry {
-        x = x + 90;
         r = x;
+        _putc(x);
+        r = r + 1;
+        _putc(r);
+        _putc(nl);
     }
 '''
 
