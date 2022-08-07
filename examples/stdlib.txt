@@ -219,7 +219,6 @@ inline _get {
         >>> __rel($0, $1)
     ]
     <<< __ret($1)
-<<<<<<< HEAD
 }
 
 inline _putsln {
@@ -233,6 +232,4 @@ inline _putsln {
     [<]
     <<<
     __ret($0)
-=======
->>>>>>> fera-006-for-loops
 }
