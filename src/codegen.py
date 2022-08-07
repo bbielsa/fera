@@ -233,6 +233,38 @@ class CodeGenerator:
     def emit_call_procedure(self, stmt):
         raise NotImplementedError()
 
+    # copy a to b
+    def emit_copy(self, a, b):
+        temp = self.allocator.alloc(Type("byte"))
+
+        self.emit_seek(a.heap_pointer)
+        self.emit_command(Command.JUMP)
+        self.emit_return(a.heap_pointer)
+        self.emit_seek(b.heap_pointer)
+        self.emit_command(Command.INC)
+        self.emit_return(b.heap_pointer)
+        self.emit_seek(temp.heap_pointer)
+        self.emit_command(Command.INC)
+        self.emit_return(temp.heap_pointer)
+        self.emit_seek(a.heap_pointer)
+        self.emit_command(Command.DEC)
+        self.emit_command(Command.LOOP)
+        self.emit_return(a.heap_pointer)
+
+        self.emit_seek(temp.heap_pointer)
+        self.emit_command(Command.JUMP)
+        self.emit_return(temp.heap_pointer)
+        self.emit_seek(a.heap_pointer)
+        self.emit_command(Command.INC)
+        self.emit_return(a.heap_pointer)
+        self.emit_seek(temp.heap_pointer)
+        self.emit_command(Command.DEC)
+        self.emit_command(Command.LOOP)
+        self.emit_return(temp.heap_pointer)
+
+
+        self.allocator.free(temp)
+
     def emit_expression(self, expr):
         cell_type = Type("byte")
         cell = self.allocator.alloc(cell_type)
@@ -246,7 +278,10 @@ class CodeGenerator:
             return cell
         elif type(expr) == Identifier:
             ident = self.scope[expr.name]
-            return ident
+
+            self.emit_copy(ident, cell)
+
+            return cell
 
         lhs = self.emit_expression(expr.left)
         rhs = self.emit_expression(expr.right)
@@ -283,6 +318,12 @@ class CodeGenerator:
     def emit_assign_statement(self, stmt):
         dest_cell = self.scope[stmt.identifier.name]
         source_cell = self.emit_expression(stmt.value)
+
+        self.emit_seek(dest_cell.heap_pointer)
+        self.emit_command(Command.JUMP)
+        self.emit_command(Command.DEC)
+        self.emit_command(Command.LOOP)
+        self.emit_return(dest_cell.heap_pointer)
 
         self.emit_seek(source_cell.heap_pointer)
         self.emit_command(Command.JUMP)
