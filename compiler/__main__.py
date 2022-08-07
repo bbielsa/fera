@@ -1,7 +1,7 @@
-from parser import parse
-from scope import Identifier
-from tree import CallInlineStatement
-from codegen import CodeGenerator
+from .parser import parse
+from .scope import Identifier
+from .tree import CallInlineStatement
+from .codegen import CodeGenerator
 
 code = '''
     data {

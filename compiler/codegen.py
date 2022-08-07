@@ -1,14 +1,14 @@
-from tree import ForStatement, WhileStatement
-from tree import Type, ArrayType
-from scope import Identifier, IndexedIdentifier, Scope
-from tree import CallProcedureStatement
-from tree import ConstantExpression
-from tree import AssignStatement
-from tree import RelativeDirectiveStatement
-from tree import Program, DeclareStatement, CallInlineStatement, OriginDirectiveStatement, ReturnDirectiveStatement, CommandStatement
-from tree import DataBlock, EntryBlock, InlineBlock
-from command import Command, Comment
-import pprint
+from .tree import ForStatement, WhileStatement
+from .tree import Type, ArrayType
+from .scope import Identifier, IndexedIdentifier, Scope
+from .tree import CallProcedureStatement
+from .tree import ConstantExpression
+from .tree import AssignStatement
+from .tree import RelativeDirectiveStatement
+from .tree import Program, DeclareStatement, CallInlineStatement, OriginDirectiveStatement, ReturnDirectiveStatement, CommandStatement
+from .tree import DataBlock, EntryBlock, InlineBlock
+from .command import Command, Comment
+
 
 class Cell:
     def __init__(self, heap_pointer=None):

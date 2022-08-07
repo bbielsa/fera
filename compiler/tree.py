@@ -1,8 +1,6 @@
-from tokenize import Name
-from scope import Identifier
-from command import Command
-from scope import Identifier, IndexedIdentifier
-from io import StringIO
+from .scope import Identifier
+from .command import Command
+from .scope import Identifier, IndexedIdentifier
 
 #
 # Expressions
