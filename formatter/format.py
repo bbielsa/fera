@@ -1,6 +1,6 @@
 import sys
-from ply.lex import lex
-from ply.yacc import yacc
+from .ply.lex import lex
+from .ply.yacc import yacc
 
 
 tokens = (
@@ -59,8 +59,8 @@ def p_cmd(p):
     '''
     p[0] = p[1]
 
-def pprint(program, depth=0, tab='  '):
-    indent = tab * depth
+def pprint(program, depth=0, tab_size=2):
+    indent = ' ' * tab_size * depth
 
     print(indent, sep="", end="")
 
@@ -74,28 +74,15 @@ def pprint(program, depth=0, tab='  '):
             print(indent, sep="", end="")
             print(open, sep="", end="")
             print()
-            pprint(cmd, depth=depth+1)
+            pprint(cmd, depth=depth+1, tab_size=tab_size)
             print(indent, sep="", end="")
             print(close)
             print(indent, sep="", end="")
     print()
 
-def format():
-    if len(sys.argv) != 2:
-        print("Usage: python3 format.py <filename>")
-        return
-
-    program_path = sys.argv[1]
-
-    with open(program_path) as f:
-        source = f.read()
-        parser = yacc()
-        ast = parser.parse(source)
-        
-        pprint(ast)
-
-if __name__ == '__main__':
+def format(code, tab_size=2):
     lexer = lex()
     parser = yacc()
+    ast = parser.parse(code)
 
-    format()
+    pprint(ast, tab_size=tab_size)

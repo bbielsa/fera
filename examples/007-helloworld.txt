@@ -1,0 +1,20 @@
+data {
+    str: byte[14] = "Hello, world!";
+}
+
+inline _putsln {
+    __org($0)
+    >>>>
+    [.>]
+    ++++++++++
+    .
+    ----------
+    <
+    [<]
+    <<<
+    __ret($0)
+}
+
+entry {
+    _putsln(str);
+}

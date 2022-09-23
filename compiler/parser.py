@@ -1,26 +1,26 @@
 from ast import Index
 from ply.lex import lex
 from ply.yacc import yacc
-from scope import Identifier
-from tree import WhileStatement
-from tree import ForStatement
-from tree import ConditionalStatement
-from tree import ProcedureBlock
-from tree import CallInlineStatement
-from tree import CallProcedureStatement
-from tree import AssignStatement
-from tree import ReturnDirectiveStatement, BinaryExpression
-from tree import OriginDirectiveStatement, RelativeDirectiveStatement
-from tree import Program
-from tree import InlineBlock
-from tree import DataBlock
-from tree import EntryBlock
-from tree import ConstantExpression
-from tree import DeclareStatement, Type, ArrayType
-from tree import CommandStatement
-from scope import IndexedIdentifier
-from command import Command
-from util import flatten_productions, flatten_productions_sep
+from .scope import Identifier
+from .tree import WhileStatement
+from .tree import ForStatement
+from .tree import ConditionalStatement
+from .tree import ProcedureBlock
+from .tree import CallInlineStatement
+from .tree import CallProcedureStatement
+from .tree import AssignStatement
+from .tree import ReturnDirectiveStatement, BinaryExpression
+from .tree import OriginDirectiveStatement, RelativeDirectiveStatement
+from .tree import Program
+from .tree import InlineBlock
+from .tree import DataBlock
+from .tree import EntryBlock
+from .tree import ConstantExpression
+from .tree import DeclareStatement, Type, ArrayType
+from .tree import CommandStatement
+from .scope import IndexedIdentifier
+from .command import Command
+from .util import flatten_productions, flatten_productions_sep
 
 # --- Tokenizer
 
