@@ -27,9 +27,10 @@ code = '''
 '''
 
 program = parse(code)
-# print(program.data_block.body[1].constant[2].value)
 codegen = CodeGenerator(program)
+
 codegen.emit_program()
+
 compiled = codegen.compile(pretty=False)
 
 print(compiled)
