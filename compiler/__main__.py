@@ -1,7 +1,5 @@
-from .parser import parse
-from .scope import Identifier
-from .tree import CallInlineStatement
-from .codegen import CodeGenerator
+from . import Fera
+import argparse
 
 code = '''
     data {
@@ -26,11 +24,18 @@ code = '''
     }
 '''
 
-program = parse(code)
-codegen = CodeGenerator(program)
+parser = argparse.ArgumentParser(description="Command line frontend for the fera language compiler")
 
-codegen.emit_program()
+parser.add_argument("-p",
+    dest="pretty",
+    action="store_true",
+    help="Pretty print the output")
 
-compiled = codegen.compile(pretty=False)
+parser.add_argument("filename",
+    help="Fera input file")
 
-print(compiled)
+args = parser.parse_args()
+
+with open(args.filename) as f:
+    compiled = Fera.compile(f, args.pretty)
+    print(compiled)
