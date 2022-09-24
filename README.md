@@ -1,7 +1,13 @@
 # fera 
 
-### How to run
+## Usage
 
+### fera compiler
 ```bash
-python -m compiler example.fra
+python3 -m compiler example.fra
+```
+
+### bf formatter
+```bash
+python3 -m formatter example.bf
 ```
