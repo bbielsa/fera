@@ -1,4 +1,5 @@
 import sys
+from io import StringIO
 from .ply.lex import lex
 from .ply.yacc import yacc
 
@@ -59,30 +60,40 @@ def p_cmd(p):
     '''
     p[0] = p[1]
 
-def pprint(program, depth=0, tab_size=2):
+def pprint(program, out, depth=0, tab_size=2, max_column=40):
     indent = ' ' * tab_size * depth
+    column = 0
 
-    print(indent, sep="", end="")
+    out.write(indent)
 
     for cmd in program:    
         if type(cmd) == str:
-            print(cmd, sep="", end="")
+            out.write(cmd)
+            column += 1
+
+            if column > max_column:
+                out.write("\n")
+                out.write(indent)
+                column = 0
         elif type(cmd) == list:
             open = cmd.pop(0)
             close = cmd.pop()
-            print()
-            print(indent, sep="", end="")
-            print(open, sep="", end="")
-            print()
-            pprint(cmd, depth=depth+1, tab_size=tab_size)
-            print(indent, sep="", end="")
-            print(close)
-            print(indent, sep="", end="")
-    print()
+            out.write("\n")
+            out.write(indent)
+            out.write(open)
+            out.write("\n")
+            pprint(cmd, out, depth=depth+1, tab_size=tab_size)
+            out.write(indent)
+            out.write(close + "\n")
+            out.write(indent)
+
+    out.write("\n")
 
 def format(code, tab_size=2):
     lexer = lex()
     parser = yacc()
     ast = parser.parse(code)
-
-    pprint(ast, tab_size=tab_size)
+    
+    with StringIO() as out:
+        pprint(ast, out, tab_size=tab_size)
+        return out.getvalue()

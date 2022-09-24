@@ -10,5 +10,6 @@ if __name__ == "__main__":
     
     with open(args.path) as f:
         code = f.read()
-        format(code, tab_size=args.indent)
+        formatted = format(code, tab_size=args.indent)
 
+        print(formatted)
