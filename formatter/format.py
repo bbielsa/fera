@@ -1,7 +1,6 @@
-import sys
 from io import StringIO
-from .ply.lex import lex
-from .ply.yacc import yacc
+from ply.lex import lex
+from ply.yacc import yacc
 
 
 tokens = (
