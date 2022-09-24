@@ -1,3 +1,4 @@
+from formatter.format import format
 from .parser import parse
 from .scope import Identifier
 from .tree import CallInlineStatement
@@ -13,6 +14,9 @@ class Fera:
         codegen.emit_program()
 
         compiled = codegen.compile(pretty=False)
+
+        if pretty:
+            compiled = format(compiled)
 
         return compiled
 
