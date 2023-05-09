@@ -24,7 +24,7 @@ class TestAssign(unittest.TestCase):
 
         self.assertEqual(10, bf.cells[0])
 
-    def test_assign(self):
+    def test_assign_copy(self):
         code = '''
         data {
             x: byte = 20;
@@ -41,16 +41,17 @@ class TestAssign(unittest.TestCase):
         self.assertEqual(20, bf.cells[0])
         self.assertEqual(20, bf.cells[1])
 
-    def test_assign_constant(self):
+    def test_assign(self):
         code = '''
         data {
-            x: byte = 12 * 2;
+            x: byte;
         }
 
         entry {
-
+            x = 15;
         }
         '''
+
         bf = self._run(code)
 
-        self.assertEqual(24, bf.cells[0])
+        self.assertEqual(15, bf.cells[0])
