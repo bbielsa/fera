@@ -1,0 +1,17 @@
+data {
+
+}
+
+inline _prtnln {
+
+}
+
+inline _example {
+    ++++
+}
+
+entry {
+    x x x;
+    x x;
+    x+;x + + x;
+}

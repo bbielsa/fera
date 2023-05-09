@@ -42,6 +42,9 @@ class Statement(Node):
     def __init__(self):
         pass
 
+class EmptyStatement(Statement):
+    pass
+
 class DeclareStatement(Statement):
     def __init__(self, id, type, const=None):
         self.identifier = id

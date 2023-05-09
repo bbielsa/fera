@@ -76,7 +76,7 @@ yaccdebug   = False            # Debugging mode.  If set, yacc generates a
                                # a 'parser.out' file in the current directory
 
 debug_file  = 'parser.out'     # Default name of the debugging file
-error_count = 3                # Number of symbols that must be shifted to leave recovery mode
+error_count = 2                # Number of symbols that must be shifted to leave recovery mode
 resultlimit = 40               # Size limit of results when running in debug mode.
 
 MAXINT = sys.maxsize

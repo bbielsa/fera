@@ -5,7 +5,7 @@ from .tree import CallProcedureStatement
 from .tree import ConstantExpression
 from .tree import AssignStatement
 from .tree import RelativeDirectiveStatement
-from .tree import Program, DeclareStatement, CallInlineStatement, OriginDirectiveStatement, ReturnDirectiveStatement, CommandStatement
+from .tree import Program, EmptyStatement, DeclareStatement, CallInlineStatement, OriginDirectiveStatement, ReturnDirectiveStatement, CommandStatement
 from .tree import DataBlock, EntryBlock, InlineBlock
 from .command import Command, Comment
 
@@ -223,6 +223,8 @@ class CodeGenerator:
             self.emit_call_procedure(stmt)
         elif type(stmt) == ForStatement:
             self.emit_for(stmt)
+        elif type(stmt) == EmptyStatement:
+            pass
         elif stmt == None:
             pass
         else:

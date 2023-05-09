@@ -2,7 +2,7 @@ from ast import Index
 from ply.lex import lex
 from ply.yacc import yacc
 from .scope import Identifier
-from .tree import WhileStatement
+from .tree import EmptyStatement, WhileStatement
 from .tree import ForStatement
 from .tree import ConditionalStatement
 from .tree import ProcedureBlock
@@ -211,8 +211,23 @@ def p_stmt(p):
          | conditional_stmt
          | for_stmt
          | while_stmt
+         | empty_stmt
+         | error_stmt
     '''
+
     p[0] = p[1]
+
+def p_error_stmt(p):
+    '''
+    error_stmt : error SEMICOLON
+    '''
+    p[0] = EmptyStatement()
+
+def p_empty_stmt(p):
+    '''
+    empty_stmt : empty SEMICOLON
+    '''
+    p[0] = EmptyStatement()
 
 def p_while_stmt(p):
     '''
